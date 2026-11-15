@@ -1003,6 +1003,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid product ID"
+                    },
                     "404": {
                         "description": "Product not found"
                     }
@@ -1045,6 +1048,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid product ID"
+                    },
                     "404": {
                         "description": "Product not found"
                     }
@@ -1069,6 +1075,9 @@
                 "responses": {
                     "204": {
                         "description": "Product deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid product ID"
                     },
                     "404": {
                         "description": "Product not found"
@@ -1155,6 +1164,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid supplier ID"
+                    },
                     "404": {
                         "description": "Supplier not found"
                     }
@@ -1197,6 +1209,9 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid supplier ID"
+                    },
                     "404": {
                         "description": "Supplier not found"
                     }
@@ -1221,6 +1236,9 @@
                 "responses": {
                     "204": {
                         "description": "Supplier deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid supplier ID"
                     },
                     "404": {
                         "description": "Supplier not found"

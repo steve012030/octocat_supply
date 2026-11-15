@@ -57,6 +57,8 @@
  *               $ref: '#/components/schemas/Product'
  *       404:
  *         description: Product not found
+ *       400:
+ *         description: Invalid product ID
  *   put:
  *     summary: Update a product
  *     tags: [Products]
@@ -82,6 +84,8 @@
  *               $ref: '#/components/schemas/Product'
  *       404:
  *         description: Product not found
+ *       400:
+ *         description: Invalid product ID
  *   delete:
  *     summary: Delete a product
  *     tags: [Products]
@@ -97,14 +101,27 @@
  *         description: Product deleted successfully
  *       404:
  *         description: Product not found
+ *       400:
+ *         description: Invalid product ID
  */
 
 import express from 'express';
 import { Product } from '../models/product';
 import { getProductsRepository } from '../repositories/productsRepo';
 import { NotFoundError } from '../utils/errors';
+import { parsePositiveIntegerParam } from '../utils/routeParams';
 
 const router = express.Router();
+
+router.param('id', (req, res, next, id) => {
+  const parsedId = parsePositiveIntegerParam(id);
+  if (parsedId === null) {
+    res.status(400).send('Invalid product ID');
+    return;
+  }
+  req.params.id = String(parsedId);
+  next();
+});
 
 // Create a new product
 router.post('/', async (req, res, next) => {
@@ -132,7 +149,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const repo = await getProductsRepository();
-    const product = await repo.findById(parseInt(req.params.id));
+    const product = await repo.findById(Number(req.params.id));
     if (product) {
       res.json(product);
     } else {
@@ -162,7 +179,7 @@ router.get('/name/:name', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const repo = await getProductsRepository();
-    const updatedProduct = await repo.update(parseInt(req.params.id), req.body);
+    const updatedProduct = await repo.update(Number(req.params.id), req.body);
     res.json(updatedProduct);
   } catch (error) {
     if (error instanceof NotFoundError) {
@@ -177,7 +194,7 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const repo = await getProductsRepository();
-    await repo.delete(parseInt(req.params.id));
+    await repo.delete(Number(req.params.id));
     res.status(204).send();
   } catch (error) {
     if (error instanceof NotFoundError) {
