@@ -121,6 +121,31 @@ describe('Supplier API', () => {
     expect(response.body.error.code).toBe('DATABASE_BUSY');
   });
 
+  it('returns 400 for malformed supplier ID parameters before accessing the repository', async () => {
+    const getResponse = await request(app).get('/suppliers/not-a-number');
+    const updateResponse = await request(app).put('/suppliers/1.5').send({ name: 'Updated' });
+    const deleteResponse = await request(app).delete('/suppliers/9007199254740992');
+    const statusResponse = await request(app).get('/suppliers/-1/status');
+
+    expect(getResponse.status).toBe(400);
+    expect(updateResponse.status).toBe(400);
+    expect(deleteResponse.status).toBe(400);
+    expect(statusResponse.status).toBe(400);
+    expect(getSuppliersRepository).not.toHaveBeenCalled();
+  });
+
+  it('passes repository connection failures to the error handler', async () => {
+    vi.mocked(getSuppliersRepository).mockRejectedValue(
+      new Error('Failed to connect to database: unable to open database file'),
+    );
+
+    const response = await request(app).get('/suppliers');
+
+    expect(response.status).toBe(500);
+    expect(response.body.error.code).toBe('INTERNAL_ERROR');
+    expect(response.body.error.message).toBe('An unexpected error occurred');
+  });
+
   it('passes supplier lookup, status, and mutation failures to the error handler', async () => {
     const failure = new DatabaseError('Database is temporarily unavailable', 'DATABASE_BUSY', 503);
     vi.mocked(repository.findById).mockRejectedValue(failure);

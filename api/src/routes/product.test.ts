@@ -126,6 +126,29 @@ describe('Product API', () => {
     expect(response.body.error.code).toBe('DATABASE_BUSY');
   });
 
+  it('returns 400 for malformed product ID parameters before accessing the repository', async () => {
+    const getResponse = await request(app).get('/products/not-a-number');
+    const updateResponse = await request(app).put('/products/12abc').send({ name: 'Updated' });
+    const deleteResponse = await request(app).delete('/products/0');
+
+    expect(getResponse.status).toBe(400);
+    expect(updateResponse.status).toBe(400);
+    expect(deleteResponse.status).toBe(400);
+    expect(getProductsRepository).not.toHaveBeenCalled();
+  });
+
+  it('passes repository connection failures to the error handler', async () => {
+    vi.mocked(getProductsRepository).mockRejectedValue(
+      new Error('Failed to connect to database: unable to open database file'),
+    );
+
+    const response = await request(app).get('/products');
+
+    expect(response.status).toBe(500);
+    expect(response.body.error.code).toBe('INTERNAL_ERROR');
+    expect(response.body.error.message).toBe('An unexpected error occurred');
+  });
+
   it('passes lookup and mutation failures to the error handler', async () => {
     const failure = new DatabaseError('Database is temporarily unavailable', 'DATABASE_BUSY', 503);
     vi.mocked(repository.findById).mockRejectedValue(failure);

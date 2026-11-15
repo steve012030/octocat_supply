@@ -57,6 +57,8 @@
  *               $ref: '#/components/schemas/Supplier'
  *       404:
  *         description: Supplier not found
+ *       400:
+ *         description: Invalid supplier ID
  *   put:
  *     summary: Update a supplier
  *     tags: [Suppliers]
@@ -82,6 +84,8 @@
  *               $ref: '#/components/schemas/Supplier'
  *       404:
  *         description: Supplier not found
+ *       400:
+ *         description: Invalid supplier ID
  *   delete:
  *     summary: Delete a supplier
  *     tags: [Suppliers]
@@ -97,6 +101,8 @@
  *         description: Supplier deleted successfully
  *       404:
  *         description: Supplier not found
+ *       400:
+ *         description: Invalid supplier ID
  *
  * /api/suppliers/{id}/status:
  *   get:
@@ -122,14 +128,27 @@
  *                   enum: [INACTIVE, APPROVED, PENDING]
  *       404:
  *         description: Supplier not found
+ *       400:
+ *         description: Invalid supplier ID
  */
 
 import express from 'express';
 import { Supplier } from '../models/supplier';
 import { getSuppliersRepository } from '../repositories/suppliersRepo';
-import { handleDatabaseError, NotFoundError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors';
+import { parsePositiveIntegerParam } from '../utils/routeParams';
 
 const router = express.Router();
+
+router.param('id', (req, res, next, id) => {
+  const parsedId = parsePositiveIntegerParam(id);
+  if (parsedId === null) {
+    res.status(400).send('Invalid supplier ID');
+    return;
+  }
+  req.params.id = String(parsedId);
+  next();
+});
 
 // Create a new supplier
 router.post('/', async (req, res, next) => {
@@ -157,7 +176,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const repo = await getSuppliersRepository();
-    const supplier = await repo.findById(parseInt(req.params.id));
+    const supplier = await repo.findById(Number(req.params.id));
     if (supplier) {
       res.json(supplier);
     } else {
@@ -173,7 +192,7 @@ router.get('/:id', async (req, res, next) => {
 router.put('/:id', async (req, res, next) => {
   try {
     const repo = await getSuppliersRepository();
-    const updatedSupplier = await repo.update(parseInt(req.params.id), req.body);
+    const updatedSupplier = await repo.update(Number(req.params.id), req.body);
     res.json(updatedSupplier);
   } catch (error) {
     if (error instanceof NotFoundError) {
@@ -188,7 +207,7 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const repo = await getSuppliersRepository();
-    await repo.delete(parseInt(req.params.id));
+    await repo.delete(Number(req.params.id));
     res.status(204).send();
   } catch (error) {
     if (error instanceof NotFoundError) {
@@ -203,7 +222,7 @@ router.delete('/:id', async (req, res, next) => {
 router.get('/:id/status', async (req, res, next) => {
   try {
     const repo = await getSuppliersRepository();
-    const supplier = await repo.findById(parseInt(req.params.id));
+    const supplier = await repo.findById(Number(req.params.id));
     if (!supplier) {
       res.status(404).send('Supplier not found');
       return;
