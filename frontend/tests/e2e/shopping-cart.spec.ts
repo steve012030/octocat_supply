@@ -62,6 +62,11 @@ test.describe('Shopping cart', () => {
     await expect(quantity).toHaveValue('3');
     await expect(page.getByRole('link', { name: 'Shopping cart, 3 items' })).toBeVisible();
     await expect(page.locator('dl').getByText('$267.00', { exact: true })).toBeVisible();
+    await expect(page.locator('dl').getByText('-$13.35', { exact: true })).toBeVisible();
+    await expect(page.locator('dl').getByText('$263.65', { exact: true })).toBeVisible();
+
+    await page.reload();
+    await expect(quantity).toHaveValue('3');
   });
 
   test('removes a product and shows the empty cart state', async ({ page }) => {
